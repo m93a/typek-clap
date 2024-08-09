@@ -1,0 +1,12 @@
+{
+  "name": "@typek/clap",
+  "module": "mod.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/node": "latest",
+    "typescript": "latest"
+  },
+  "dependencies": {
+    "@typek/typek": "npm:@jsr/typek__typek"
+  }
+}

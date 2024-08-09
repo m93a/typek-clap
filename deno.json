@@ -1,0 +1,8 @@
+{
+  "name": "@typek/clap",
+  "version": "0.1.0",
+  "exports": "./mod.ts",
+  "imports": {
+    "@typek/typek": "jsr:@typek/typek@^0.1.16"
+  }
+}
