@@ -4,6 +4,7 @@ import type {
   CommandOptions,
 } from "./command.ts";
 import type { IsSingleChar, Join } from "@typek/typek";
+import { ClapConfigurationError } from "./errors.ts";
 
 declare const ERROR: unique symbol;
 
@@ -25,7 +26,7 @@ type ValidateSubcommandRequired<
   : Success;
 const validateSubcommandRequired = (x: CommandDefinition): void => {
   if (x.subcommandRequired && !x.subcommands?.length) {
-    throw new TypeError(
+    throw new ClapConfigurationError(
       `In command \`${x.name}\`, a subcommand is required, yet no subcommands are specified.`
     );
   }
@@ -67,7 +68,7 @@ const validateMultipleDefault = (x: CommandDefinition): void => {
     .filter((s) => s.isDefault)
     .map((s) => s.name);
   if (defaultNames.length > 1) {
-    throw new TypeError(
+    throw new ClapConfigurationError(
       `In command \`${
         x.name
       }\`, multiple subcommands are specified as default: ${defaultNames.join(
@@ -123,7 +124,7 @@ type ValidateDisallowWithoutFlag<
   : Success;
 const validateDisallowWithoutFlag = (x: SubcommandDefinition): void => {
   if (x.disallowWithoutFlag && !(x.longFlag || x.shortFlag)) {
-    throw new TypeError(
+    throw new ClapConfigurationError(
       `In subcommand \`${x.name}\`, calling without flag is disallowed, yet neither \`longFlag\` nor \`shortFlag\` are specified.`
     );
   }
@@ -147,7 +148,7 @@ type ValidateShortFlagSingleChar<
   : Success;
 const validateShortFlagSingleChar = (x: SubcommandDefinition): void => {
   if (x.shortFlag && x.shortFlag.length !== 1) {
-    throw new TypeError(
+    throw new ClapConfigurationError(
       `In subcommand \`${x.name}\`, a short flag \`${x.shortFlag}\` was specified. Only short flags consisting of single letter are supported.`
     );
   }
@@ -194,7 +195,7 @@ const validateFlagAliasesWithoutFlag = (
   type: "long" | "short"
 ): void => {
   if (x[`${type}FlagAliases`]?.length && !x[`${type}Flag`]) {
-    throw new TypeError(
+    throw new ClapConfigurationError(
       `In subcommand \`${x.name}\`, an alias for a ${type} flag has been provided while \`${type}Flag\` is not specified.`
     );
   }

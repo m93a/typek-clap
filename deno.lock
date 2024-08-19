@@ -55,8 +55,8 @@
     "packageJson": {
       "dependencies": [
         "npm:@jsr/typek__typek",
-        "npm:@types/node@latest",
-        "npm:typescript@latest"
+        "npm:@types/node@22.1.0",
+        "npm:typescript@5.5.4"
       ]
     }
   }

@@ -1,3 +1,10 @@
+import { type Arguments, parseArguments, type ParsedArgument } from "./args.ts";
+import { validateCommandOptions } from "./validate.ts";
+import {
+  ClapSubcommandLongFlagValueError,
+  ClapUnreachableError,
+} from "./errors.ts";
+
 export interface CommandDefinition {
   /** The name of this command. */
   name: string;
@@ -182,15 +189,107 @@ export interface CommandOptions extends CommandDefinition {
 
 export interface Command<T extends CommandOptions> {
   options: CommandOptions;
+  handle(rawArgs: string[]): void;
+  handle(args: Arguments): void;
 }
 
 function createCommand(
   this: unknown,
   options: CommandOptions
 ): Command<CommandOptions> {
-  return { options };
+  validateCommandOptions(options);
+
+  return {
+    options,
+    handle(args_: Arguments | string[]) {
+      if (Array.isArray(args_)) args_ = parseArguments(args_);
+      const args = [...args_.parsed];
+      let command: CommandOptions = options;
+
+      while (args.length > 0) {
+        const arg = args.shift()!;
+
+        //
+        // Check for subcommand
+        {
+          const { sub, nextArg } = matchSubcommand(command, arg);
+          if (sub) {
+          }
+        }
+
+        throw new ClapUnreachableError(
+          `Unexpected type of argument: ${JSON.stringify(arg)}`
+        );
+      }
+    },
+  };
 }
 
+const matchSubcommand = (
+  command: CommandDefinition,
+  argument: ParsedArgument
+): { sub?: SubcommandDefinition; nextArg?: ParsedArgument } => {
+  for (const sub of command.subcommands ?? []) {
+    //
+    // Ordinary subcommand as a text-type argument
+    if (
+      "text" in argument &&
+      !sub.disallowWithoutFlag &&
+      argument.text === sub.name
+    )
+      return { sub };
+
+    //
+    // Subcommand as a long flag
+    if (
+      "long" in argument &&
+      sub.longFlag !== undefined &&
+      [sub.longFlag, ...(sub.longFlagAliases ?? [])].includes(
+        argument.long.substring(2)
+      )
+    ) {
+      if (argument.argument !== undefined) {
+        throw new ClapSubcommandLongFlagValueError(
+          argument.long,
+          argument.argument
+        );
+      }
+      return { sub };
+    }
+
+    //
+    // Subcommand as a short flag
+    if (
+      "short" in argument &&
+      sub.shortFlag !== undefined &&
+      [sub.shortFlag, ...(sub.shortFlagAliases ?? [])].some(
+        (s) => s === argument.short[1] // matches first short flag in argument
+      )
+    ) {
+      // argument only has one short flag
+      if (argument.short.length === 2) return { sub };
+      return {
+        sub,
+        nextArg: { short: `-${argument.short.substring(2)}` },
+      };
+    }
+  }
+
+  //
+  // Default subcommand
+  const sub = command.subcommands?.find((s) => s.isDefault);
+  if (sub) return { sub, nextArg: argument };
+
+  //
+  // No subcommand found
+  return { nextArg: argument };
+};
+
+/**
+ * Creates a command definition from the supplied options.
+ *
+ * @throws ClapError
+ */
 export const Command = <
   {
     <T extends CommandOptions>(options: T): Command<T>;

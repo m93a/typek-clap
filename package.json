@@ -3,8 +3,8 @@
   "module": "mod.ts",
   "type": "module",
   "devDependencies": {
-    "@types/node": "latest",
-    "typescript": "latest"
+    "@types/node": "22.1.0",
+    "typescript": "5.5.4"
   },
   "dependencies": {
     "@typek/typek": "npm:@jsr/typek__typek"
